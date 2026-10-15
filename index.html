@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognition & Devin Knowledge Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
+            animation: gradientMove 20s ease infinite;
+            pointer-events: none;
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-5%, -5%); }
+        }
+
+        .container {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            box-shadow: 0 0 80px rgba(99, 102, 241, 0.3),
+                        0 25px 50px rgba(0, 0, 0, 0.5);
+            max-width: 800px;
+            width: 100%;
+            padding: 56px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: #f8fafc;
+            margin-bottom: 12px;
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 0;
+            font-size: 17px;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .progress-container {
+            margin-bottom: 36px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #818cf8 0%, #c084fc 100%);
+            border-radius: 3px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.5);
+        }
+
+        .progress-text {
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .question {
+            margin-bottom: 32px;
+        }
+
+        .question-text {
+            font-size: 24px;
+            color: #f1f5f9;
+            margin-bottom: 28px;
+            line-height: 1.6;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 24px 28px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 17px;
+            font-family: inherit;
+            min-height: 160px;
+            resize: vertical;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(15, 23, 42, 0.6);
+            color: #f8fafc;
+            line-height: 1.6;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #818cf8;
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.15),
+                        0 0 30px rgba(129, 140, 248, 0.2);
+        }
+
+        .answer-input::placeholder {
+            color: #475569;
+        }
+
+        .keyword-feedback {
+            margin-top: 24px;
+            padding: 24px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            border-radius: 20px;
+            display: none;
+        }
+
+        .keyword-feedback.show {
+            display: block;
+            animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .keyword-feedback h4 {
+            color: #a5b4fc;
+            margin-bottom: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .keyword-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .keyword {
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .keyword.found {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .keyword.missed {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .explanation {
+            margin-top: 28px;
+            padding: 28px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 20px;
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+            animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .explanation h3 {
+            color: #93c5fd;
+            margin-bottom: 14px;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .explanation p {
+            color: #cbd5e1;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
+        .buttons {
+            margin-top: 32px;
+            display: flex;
+            gap: 16px;
+        }
+
+        button {
+            padding: 18px 36px;
+            border: none;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
+            letter-spacing: 0.3px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(129, 140, 248, 0.4);
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(129, 140, 248, 0.5);
+        }
+
+        .submit-btn:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            background: rgba(100, 116, 139, 0.3);
+            cursor: not-allowed;
+            box-shadow: none;
+            color: #64748b;
+        }
+
+        .next-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .next-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(16, 185, 129, 0.5);
+        }
+
+        .next-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(129, 140, 248, 0.4);
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(129, 140, 248, 0.5);
+        }
+
+        .restart-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .score-display {
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 40px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            border-radius: 24px;
+        }
+
+        .score-display h2 {
+            color: #f8fafc;
+            font-size: 56px;
+            margin-bottom: 16px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .score-display p {
+            color: #94a3b8;
+            font-size: 19px;
+            line-height: 1.6;
+        }
+
+        .topics-to-review {
+            margin-top: 28px;
+            padding: 28px;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 20px;
+        }
+
+        .topics-to-review h3 {
+            color: #fcd34d;
+            margin-bottom: 18px;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .topics-to-review ul {
+            margin-left: 28px;
+            color: #fbbf24;
+        }
+
+        .topics-to-review li {
+            margin: 12px 0;
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 16px;
+            }
+
+            .container {
+                padding: 36px 24px;
+                border-radius: 24px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .subtitle {
+                font-size: 15px;
+            }
+
+            .question-text {
+                font-size: 20px;
+            }
+
+            .answer-input {
+                padding: 18px 20px;
+                min-height: 140px;
+                font-size: 16px;
+            }
+
+            button {
+                padding: 16px 28px;
+                font-size: 16px;
+            }
+
+            .score-display h2 {
+                font-size: 42px;
+            }
+
+            .score-display p {
+                font-size: 17px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="quiz">
+            <div class="header">
+                <h1>Cognition & Devin Knowledge Quiz</h1>
+                <p class="subtitle">Type your answers to test your understanding of Cognition's AI tools</p>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 10%"></div>
+                </div>
+                <div class="progress-text" id="progress">Question 1 of 10</div>
+            </div>
+            <div class="question">
+                <p class="question-text" id="question-text"></p>
+                <textarea class="answer-input" id="answer-input" placeholder="Type your answer here..."></textarea>
+                <div class="keyword-feedback" id="keyword-feedback">
+                    <h4>Key points in your answer:</h4>
+                    <div class="keyword-list" id="keyword-list"></div>
+                </div>
+            </div>
+            <div class="explanation" id="explanation">
+                <h3>Explanation</h3>
+                <p id="explanation-text"></p>
+            </div>
+            <div class="buttons">
+                <button class="submit-btn" id="submit-btn" onclick="submitAnswer()">Submit Answer</button>
+                <button class="next-btn hidden" id="next-btn" onclick="nextQuestion()">Next Question</button>
+            </div>
+        </div>
+
+        <div id="results" class="hidden">
+            <div class="score-display">
+                <h2>Your Score: <span id="final-score">0</span>/10</h2>
+                <p id="score-message"></p>
+            </div>
+            <div class="topics-to-review" id="topics-to-review">
+                <h3>Topics to Review</h3>
+                <ul id="review-list"></ul>
+            </div>
+            <div class="buttons">
+                <button class="restart-btn" onclick="restartQuiz()">Restart Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "What is Cognition and what do they build?",
+                keywords: ["applied AI lab", "software agents", "end-to-end", "Devin", "company"],
+                explanation: "Cognition is an applied AI lab that builds end-to-end software agents. They're the company behind Devin, the AI software engineer.",
+                topic: "Cognition company background"
+            },
+            {
+                question: "What is Devin and what can it do?",
+                keywords: ["AI software engineer", "autonomous", "write code", "run code", "test code", "three hours"],
+                explanation: "Devin is an autonomous AI software engineer that can write, run, and test code. It can handle most tasks that a human could complete in about three hours.",
+                topic: "Devin core concept"
+            },
+            {
+                question: "What's the main difference between delegating a task to an agent versus asking a chatbot for advice?",
+                keywords: ["autonomously execute", "multi-step tasks", "tools", "terminal", "browser", "take action", "information only"],
+                explanation: "Agents like Devin can autonomously execute complex, multi-step tasks using tools like terminals, browsers, and code editors. Chatbots primarily provide information and suggestions but don't take action on your behalf.",
+                topic: "Agents vs chatbots"
+            },
+            {
+                question: "Why does Devin need access to your project folder or code repository?",
+                keywords: ["read files", "edit code", "run commands", "test changes", "understand structure", "autonomously"],
+                explanation: "Devin needs access to your codebase to read files, make edits, run commands in the terminal, test changes, and understand the project structure. This allows it to work autonomously on your code.",
+                topic: "Project access requirements"
+            },
+            {
+                question: "What is the difference between Devin Cloud and working locally with Devin CLI?",
+                keywords: ["virtual machine", "cloud", "local computer", "terminal", "Playbooks", "Secrets", "Knowledge"],
+                explanation: "Devin Cloud runs in a virtual machine in the cloud and includes features like Playbooks, Secrets, and Knowledge. Devin CLI runs locally in your terminal and works directly with your local files and environment.",
+                topic: "Devin Cloud vs CLI"
+            },
+            {
+                question: "What is Devin Desktop (formerly Windsurf) and what does it do?",
+                keywords: ["IDE", "agent command center", "manage agents", "local and cloud", "editor", "Windsurf"],
+                explanation: "Devin Desktop is an IDE that includes an Agent Command Center for managing local and cloud agents. It was formerly called Windsurf, and it combines a full-featured editor with agent management capabilities.",
+                topic: "Devin Desktop"
+            },
+            {
+                question: "What is Devin CLI and what does 'terminal interface' mean?",
+                keywords: ["command-line", "terminal", "text-based", "type commands", "text output", "not graphical"],
+                explanation: "Devin CLI is a command-line tool that you run in your terminal. A terminal interface is text-based—you type commands and see text output, rather than clicking buttons in a graphical window.",
+                topic: "Devin CLI and terminals"
+            },
+            {
+                question: "What is Devin Review and what does it help with?",
+                keywords: ["code review", "organize diffs", "catch bugs", "security scanning", "pull requests", "explanations"],
+                explanation: "Devin Review is a code review tool that groups related changes logically, catches potential bugs, provides security scanning, and offers codebase-aware chat to help you understand complex pull requests.",
+                topic: "Devin Review"
+            },
+            {
+                question: "What is DeepWiki and how does it help with understanding a codebase?",
+                keywords: ["architecture diagrams", "documentation", "source links", "auto-generate", "repositories", "understand unfamiliar"],
+                explanation: "DeepWiki automatically generates architecture diagrams, documentation, and source links for repositories. It helps developers quickly understand unfamiliar codebases by providing structured explanations and visual overviews.",
+                topic: "DeepWiki / codebase understanding"
+            },
+            {
+                question: "Why is human review, testing, and checking an agent's work important before using it?",
+                keywords: ["mistakes", "code quality", "security", "requirements", "verification", "edge cases"],
+                explanation: "While agents like Devin are powerful, they can make mistakes. Human review, testing, and verification are essential to ensure code quality, catch edge cases, maintain security, and confirm that the work meets your specific requirements.",
+                topic: "Human review and testing"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let incorrectTopics = [];
+
+        function loadQuestion() {
+            const question = questions[currentQuestion];
+            document.getElementById('question-text').textContent = question.question;
+            document.getElementById('progress').textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+            document.getElementById('progress-fill').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+
+            const answerInput = document.getElementById('answer-input');
+            answerInput.value = '';
+            answerInput.disabled = false;
+
+            document.getElementById('keyword-feedback').classList.remove('show');
+            document.getElementById('explanation').classList.remove('show');
+            document.getElementById('submit-btn').classList.remove('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('submit-btn').disabled = true;
+
+            answerInput.oninput = () => {
+                document.getElementById('submit-btn').disabled = answerInput.value.trim() === '';
+            };
+        }
+
+        function submitAnswer() {
+            const question = questions[currentQuestion];
+            const answerInput = document.getElementById('answer-input');
+            const userAnswer = answerInput.value.toLowerCase();
+            answerInput.disabled = true;
+
+            const keywordList = document.getElementById('keyword-list');
+            keywordList.innerHTML = '';
+
+            let keywordsFound = 0;
+            question.keywords.forEach(keyword => {
+                const keywordEl = document.createElement('span');
+                keywordEl.className = 'keyword';
+                const found = userAnswer.includes(keyword.toLowerCase());
+                keywordEl.classList.add(found ? 'found' : 'missed');
+                keywordEl.textContent = keyword + (found ? ' ✓' : ' ✗');
+                keywordList.appendChild(keywordEl);
+                if (found) keywordsFound++;
+            });
+
+            const scorePercentage = keywordsFound / question.keywords.length;
+            if (scorePercentage >= 0.5) {
+                score++;
+            } else {
+                incorrectTopics.push(question.topic);
+            }
+
+            document.getElementById('explanation-text').textContent = question.explanation;
+            document.getElementById('explanation').classList.add('show');
+            document.getElementById('keyword-feedback').classList.add('show');
+            document.getElementById('submit-btn').classList.add('hidden');
+            document.getElementById('next-btn').classList.remove('hidden');
+
+            if (currentQuestion === questions.length - 1) {
+                document.getElementById('next-btn').textContent = 'See Results';
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+                document.getElementById('next-btn').textContent = 'Next Question';
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('final-score').textContent = score;
+
+            const scoreMessage = document.getElementById('score-message');
+            if (score === 10) {
+                scoreMessage.textContent = "Perfect! You have a strong understanding of Cognition and Devin.";
+            } else if (score >= 7) {
+                scoreMessage.textContent = "Great job! You have a good grasp of the key concepts.";
+            } else if (score >= 5) {
+                scoreMessage.textContent = "Not bad! Review the topics below to strengthen your understanding.";
+            } else {
+                scoreMessage.textContent = "Keep learning! Review the topics below to build your knowledge.";
+            }
+
+            const reviewList = document.getElementById('review-list');
+            reviewList.innerHTML = '';
+            if (incorrectTopics.length > 0) {
+                incorrectTopics.forEach(topic => {
+                    const li = document.createElement('li');
+                    li.textContent = topic;
+                    reviewList.appendChild(li);
+                });
+            } else {
+                reviewList.innerHTML = '<li>No topics to review—you got everything right!</li>';
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            incorrectTopics = [];
+            document.getElementById('quiz').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            loadQuestion();
+        }
+
+        // Load the first question
+        loadQuestion();
+    </script>
+</body>
+</html>

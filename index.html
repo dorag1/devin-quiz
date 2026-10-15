@@ -100,6 +100,12 @@
             box-shadow: 0 0 20px rgba(129, 140, 248, 0.5);
         }
 
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
         .progress-text {
             color: #64748b;
             font-size: 14px;
@@ -146,6 +152,21 @@
 
         .answer-input::placeholder {
             color: #475569;
+        }
+
+        .input-hint {
+            margin-top: 10px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        kbd {
+            padding: 2px 6px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            font-family: inherit;
+            font-size: 12px;
         }
 
         .keyword-feedback {
@@ -292,6 +313,18 @@
             transform: translateY(-1px);
         }
 
+        .skip-btn {
+            background: transparent;
+            color: #94a3b8;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            flex: 0 1 auto;
+        }
+
+        .skip-btn:hover {
+            color: #f1f5f9;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
         .restart-btn {
             background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
             color: white;
@@ -397,6 +430,14 @@
                 font-size: 16px;
             }
 
+            .buttons {
+                flex-direction: column-reverse;
+            }
+
+            .input-hint {
+                display: none;
+            }
+
             .score-display h2 {
                 font-size: 42px;
             }
@@ -418,21 +459,26 @@
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill" style="width: 10%"></div>
                 </div>
-                <div class="progress-text" id="progress">Question 1 of 10</div>
+                <div class="progress-info">
+                    <div class="progress-text" id="progress">Question 1 of 10</div>
+                    <div class="progress-text" id="running-score" aria-live="polite">Score: 0</div>
+                </div>
             </div>
             <div class="question">
                 <p class="question-text" id="question-text"></p>
-                <textarea class="answer-input" id="answer-input" placeholder="Type your answer here..."></textarea>
+                <textarea class="answer-input" id="answer-input" placeholder="Type your answer here..." aria-labelledby="question-text"></textarea>
+                <p class="input-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to submit</p>
                 <div class="keyword-feedback" id="keyword-feedback">
                     <h4>Key points in your answer:</h4>
                     <div class="keyword-list" id="keyword-list"></div>
                 </div>
             </div>
-            <div class="explanation" id="explanation">
+            <div class="explanation" id="explanation" aria-live="polite">
                 <h3>Explanation</h3>
                 <p id="explanation-text"></p>
             </div>
             <div class="buttons">
+                <button class="skip-btn" id="skip-btn" onclick="skipQuestion()">Skip &amp; Show Answer</button>
                 <button class="submit-btn" id="submit-btn" onclick="submitAnswer()">Submit Answer</button>
                 <button class="next-btn hidden" id="next-btn" onclick="nextQuestion()">Next Question</button>
             </div>
@@ -440,7 +486,7 @@
 
         <div id="results" class="hidden">
             <div class="score-display">
-                <h2>Your Score: <span id="final-score">0</span>/10</h2>
+                <h2>Your Score: <span id="final-score">0</span>/<span id="total-questions">10</span></h2>
                 <p id="score-message"></p>
             </div>
             <div class="topics-to-review" id="topics-to-review">
@@ -534,18 +580,41 @@
             document.getElementById('keyword-feedback').classList.remove('show');
             document.getElementById('explanation').classList.remove('show');
             document.getElementById('submit-btn').classList.remove('hidden');
+            document.getElementById('skip-btn').classList.remove('hidden');
             document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('next-btn').textContent =
+                currentQuestion === questions.length - 1 ? 'See Results' : 'Next Question';
             document.getElementById('submit-btn').disabled = true;
+            updateRunningScore();
 
             answerInput.oninput = () => {
                 document.getElementById('submit-btn').disabled = answerInput.value.trim() === '';
             };
+            answerInput.focus();
+        }
+
+        function updateRunningScore() {
+            document.getElementById('running-score').textContent = `Score: ${score}`;
+        }
+
+        function isAnswered() {
+            return document.getElementById('submit-btn').classList.contains('hidden');
+        }
+
+        function skipQuestion() {
+            if (isAnswered()) return;
+            gradeAnswer('');
         }
 
         function submitAnswer() {
+            const answerInput = document.getElementById('answer-input');
+            if (isAnswered() || answerInput.value.trim() === '') return;
+            gradeAnswer(answerInput.value.toLowerCase());
+        }
+
+        function gradeAnswer(userAnswer) {
             const question = questions[currentQuestion];
             const answerInput = document.getElementById('answer-input');
-            const userAnswer = answerInput.value.toLowerCase();
             answerInput.disabled = true;
 
             const keywordList = document.getElementById('keyword-list');
@@ -573,18 +642,16 @@
             document.getElementById('explanation').classList.add('show');
             document.getElementById('keyword-feedback').classList.add('show');
             document.getElementById('submit-btn').classList.add('hidden');
+            document.getElementById('skip-btn').classList.add('hidden');
             document.getElementById('next-btn').classList.remove('hidden');
-
-            if (currentQuestion === questions.length - 1) {
-                document.getElementById('next-btn').textContent = 'See Results';
-            }
+            document.getElementById('next-btn').focus();
+            updateRunningScore();
         }
 
         function nextQuestion() {
             currentQuestion++;
             if (currentQuestion < questions.length) {
                 loadQuestion();
-                document.getElementById('next-btn').textContent = 'Next Question';
             } else {
                 showResults();
             }
@@ -594,13 +661,15 @@
             document.getElementById('quiz').classList.add('hidden');
             document.getElementById('results').classList.remove('hidden');
             document.getElementById('final-score').textContent = score;
+            document.getElementById('total-questions').textContent = questions.length;
 
             const scoreMessage = document.getElementById('score-message');
-            if (score === 10) {
+            const ratio = score / questions.length;
+            if (ratio === 1) {
                 scoreMessage.textContent = "Perfect! You have a strong understanding of Cognition and Devin.";
-            } else if (score >= 7) {
+            } else if (ratio >= 0.7) {
                 scoreMessage.textContent = "Great job! You have a good grasp of the key concepts.";
-            } else if (score >= 5) {
+            } else if (ratio >= 0.5) {
                 scoreMessage.textContent = "Not bad! Review the topics below to strengthen your understanding.";
             } else {
                 scoreMessage.textContent = "Keep learning! Review the topics below to build your knowledge.";
@@ -627,6 +696,13 @@
             document.getElementById('results').classList.add('hidden');
             loadQuestion();
         }
+
+        document.getElementById('answer-input').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                submitAnswer();
+            }
+        });
 
         // Load the first question
         loadQuestion();
